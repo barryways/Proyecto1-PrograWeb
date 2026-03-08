@@ -1,0 +1,54 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-main);
+  color: var(--text-body);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.5;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0 0 0.75rem;
+  color: var(--text-title);
+  line-height: 1.2;
+}
+
+p {
+  margin: 0 0 1rem;
+  color: var(--text-body);
+}
+
+a {
+  color: var(--text-link);
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--text-link-hover);
+}
+
+ul {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
