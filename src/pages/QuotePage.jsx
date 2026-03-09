@@ -1,145 +1,182 @@
-import { useMemo, useState } from "react";
-import { SectionHeader } from "../components/common/SectionHeader";
-import { Spinner } from "../components/common/Spinner";
-import { Alert } from "../components/common/Alert";
-import { submitToGoogleSheets } from "../services/googleSheetsService";
+import { useEffect, useMemo, useState } from 'react'
+import { SectionHeader } from '../components/common/SectionHeader'
+import { Alert } from '../components/common/Alert'
 
 const initialForm = {
-  fullName: "",
-  email: "",
-  originCountry: "usa",
-  destinationType: "misma_ciudad",
-  weight: "",
-  length: "",
-  width: "",
-  height: "",
-  serviceLevel: "estandar",
+  fullName: '',
+  email: '',
+  originCountry: 'usa',
+  destinationType: 'misma_ciudad',
+  weight: '',
+  length: '',
+  width: '',
+  height: '',
+  serviceLevel: 'estandar',
   homePickup: false,
   insurance: false,
-};
+}
+
+const initialTouched = {
+  fullName: false,
+  email: false,
+  weight: false,
+  length: false,
+  width: false,
+  height: false,
+}
+
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+}
+
+function getFieldErrors(form) {
+  const errors = {}
+  const weight = parseFloat(form.weight)
+  const length = form.length === '' ? null : parseFloat(form.length)
+  const width = form.width === '' ? null : parseFloat(form.width)
+  const height = form.height === '' ? null : parseFloat(form.height)
+
+  if (!form.fullName.trim()) {
+    errors.fullName = 'Ingresa tu nombre completo.'
+  } else if (form.fullName.trim().length < 3) {
+    errors.fullName = 'El nombre debe tener al menos 3 caracteres.'
+  }
+
+  if (!form.email.trim()) {
+    errors.email = 'Ingresa tu correo electronico.'
+  } else if (!isValidEmail(form.email.trim())) {
+    errors.email = 'Ingresa un correo electronico valido.'
+  }
+
+  if (form.weight === '') {
+    errors.weight = 'Ingresa el peso del paquete.'
+  } else if (Number.isNaN(weight) || weight <= 0) {
+    errors.weight = 'El peso debe ser mayor a 0.'
+  } else if (weight > 100) {
+    errors.weight = 'El peso maximo permitido es de 100 kg.'
+  }
+
+  const someDimensionFilled =
+    form.length !== '' || form.width !== '' || form.height !== ''
+  const allDimensionsFilled =
+    form.length !== '' && form.width !== '' && form.height !== ''
+
+  if (someDimensionFilled && !allDimensionsFilled) {
+    if (form.length === '') errors.length = 'Completa largo, ancho y alto.'
+    if (form.width === '') errors.width = 'Completa largo, ancho y alto.'
+    if (form.height === '') errors.height = 'Completa largo, ancho y alto.'
+  }
+
+  if (form.length !== '' && ((length ?? 0) <= 0 || Number.isNaN(length))) {
+    errors.length = 'El largo debe ser mayor a 0.'
+  }
+
+  if (form.width !== '' && ((width ?? 0) <= 0 || Number.isNaN(width))) {
+    errors.width = 'El ancho debe ser mayor a 0.'
+  }
+
+  if (form.height !== '' && ((height ?? 0) <= 0 || Number.isNaN(height))) {
+    errors.height = 'El alto debe ser mayor a 0.'
+  }
+
+  return errors
+}
 
 export function QuotePage() {
-  const [form, setForm] = useState(initialForm);
-  const [loading, setLoading] = useState(false);
-  const [alert, setAlert] = useState({ type: "info", message: "" });
+  const [form, setForm] = useState(initialForm)
+  const [touched, setTouched] = useState(initialTouched)
+  const [alert, setAlert] = useState({ type: 'info', message: '' })
+  const [wasQuoted, setWasQuoted] = useState(false)
+
+  const errors = useMemo(() => getFieldErrors(form), [form])
+  const hasErrors = Object.keys(errors).length > 0
 
   const handleChange = (event) => {
-    const { name, value, type, checked } = event.target;
+    const { name, value, type, checked } = event.target
 
     setForm((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
-    }));
-  };
+    }))
 
-  const validationMessage = useMemo(() => {
-    const weight = parseFloat(form.weight) || 0;
-    const length = form.length === "" ? null : parseFloat(form.length);
-    const width = form.width === "" ? null : parseFloat(form.width);
-    const height = form.height === "" ? null : parseFloat(form.height);
-
-    if (!form.fullName.trim()) {
-      return "Ingresa tu nombre completo.";
+    if (name in initialTouched) {
+      setTouched((prev) => ({ ...prev, [name]: true }))
     }
+  }
 
-    if (!form.email.trim()) {
-      return "Ingresa tu correo electrónico.";
+  const handleBlur = (event) => {
+    const { name } = event.target
+    if (name in initialTouched) {
+      setTouched((prev) => ({ ...prev, [name]: true }))
     }
-
-    if (weight <= 0) {
-      return "El peso debe ser mayor a 0.";
-    }
-
-    if (weight > 100) {
-      return "Para este cotizador académico, el peso máximo permitido es de 100 kg.";
-    }
-
-    const someDimensionFilled =
-      form.length !== "" || form.width !== "" || form.height !== "";
-
-    const allDimensionsFilled =
-      form.length !== "" && form.width !== "" && form.height !== "";
-
-    if (someDimensionFilled && !allDimensionsFilled) {
-      return "Si ingresas dimensiones, debes completar largo, ancho y alto.";
-    }
-
-    if (
-      allDimensionsFilled &&
-      ((length ?? 0) <= 0 || (width ?? 0) <= 0 || (height ?? 0) <= 0)
-    ) {
-      return "Las dimensiones deben ser mayores a 0.";
-    }
-
-    return "";
-  }, [form]);
+  }
 
   const results = useMemo(() => {
-    const weight = parseFloat(form.weight) || 0;
-    const length = parseFloat(form.length) || 0;
-    const width = parseFloat(form.width) || 0;
-    const height = parseFloat(form.height) || 0;
+    const weight = parseFloat(form.weight) || 0
+    const length = parseFloat(form.length) || 0
+    const width = parseFloat(form.width) || 0
+    const height = parseFloat(form.height) || 0
 
-    const hasDimensions = length > 0 && width > 0 && height > 0;
+    const hasDimensions = length > 0 && width > 0 && height > 0
 
     const volumetricWeight = hasDimensions
       ? (length * width * height) / 5000
-      : 0;
+      : 0
 
-    const chargeableWeight = Math.max(weight, volumetricWeight);
+    const chargeableWeight = Math.max(weight, volumetricWeight)
 
-    let baseCost = 0;
-    let distanceCost = 0;
-    let weightRate = 0;
-    let estimatedTime = "";
+    let baseCost = 0
+    let distanceCost = 0
+    let weightRate = 0
+    let estimatedTime = ''
 
     switch (form.destinationType) {
-      case "misma_ciudad":
-        baseCost = 25;
-        distanceCost = 10;
-        weightRate = 8;
-        estimatedTime = form.serviceLevel === "express" ? "4 a 8 horas" : "1 día hábil";
-        break;
+      case 'misma_ciudad':
+        baseCost = 25
+        distanceCost = 10
+        weightRate = 8
+        estimatedTime = form.serviceLevel === 'express' ? '4 a 8 horas' : '1 dia habil'
+        break
 
-      case "otro_departamento":
-        baseCost = 35;
-        distanceCost = 25;
-        weightRate = 10;
-        estimatedTime = form.serviceLevel === "express" ? "1 día hábil" : "2 a 3 días hábiles";
-        break;
+      case 'otro_departamento':
+        baseCost = 35
+        distanceCost = 25
+        weightRate = 10
+        estimatedTime = form.serviceLevel === 'express' ? '1 dia habil' : '2 a 3 dias habiles'
+        break
 
-      case "internacional":
-        baseCost = 60;
-        distanceCost = 80;
-        weightRate = 18;
+      case 'internacional':
+        baseCost = 60
+        distanceCost = 80
+        weightRate = 18
 
-        if (form.originCountry === "usa") {
-          estimatedTime = form.serviceLevel === "express" ? "7 a 10 días" : "15 días";
-        } else if (form.originCountry === "espana") {
-          estimatedTime = form.serviceLevel === "express" ? "10 a 14 días" : "21 días";
+        if (form.originCountry === 'usa') {
+          estimatedTime = form.serviceLevel === 'express' ? '7 a 10 dias' : '15 dias'
+        } else if (form.originCountry === 'espana') {
+          estimatedTime = form.serviceLevel === 'express' ? '10 a 14 dias' : '21 dias'
         } else {
-          estimatedTime = form.serviceLevel === "express" ? "8 a 12 días" : "18 días";
+          estimatedTime = form.serviceLevel === 'express' ? '8 a 12 dias' : '18 dias'
         }
-        break;
+        break
 
       default:
-        baseCost = 25;
-        distanceCost = 10;
-        weightRate = 8;
-        estimatedTime = "1 día hábil";
-        break;
+        baseCost = 25
+        distanceCost = 10
+        weightRate = 8
+        estimatedTime = '1 dia habil'
+        break
     }
 
-    const serviceMultiplier = form.serviceLevel === "express" ? 1.35 : 1;
-    const weightCost = chargeableWeight * weightRate;
+    const serviceMultiplier = form.serviceLevel === 'express' ? 1.35 : 1
+    const weightCost = chargeableWeight * weightRate
 
-    const homePickupCost = form.homePickup ? 20 : 0;
-    const insuranceCost = form.insurance ? 15 : 0;
+    const homePickupCost = form.homePickup ? 20 : 0
+    const insuranceCost = form.insurance ? 15 : 0
 
-    const subtotal = baseCost + distanceCost + weightCost;
-    const serviceAdjustment = subtotal * (serviceMultiplier - 1);
+    const subtotal = baseCost + distanceCost + weightCost
+    const serviceAdjustment = subtotal * (serviceMultiplier - 1)
     const totalEstimate =
-      subtotal + serviceAdjustment + homePickupCost + insuranceCost;
+      subtotal + serviceAdjustment + homePickupCost + insuranceCost
 
     return {
       hasDimensions,
@@ -153,57 +190,68 @@ export function QuotePage() {
       insuranceCost,
       totalEstimate,
       estimatedTime,
-    };
-  }, [form]);
+    }
+  }, [form])
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  const handleSubmit = (event) => {
+    event.preventDefault()
 
-    if (validationMessage) {
+    setTouched({
+      fullName: true,
+      email: true,
+      weight: true,
+      length: true,
+      width: true,
+      height: true,
+    })
+
+    if (hasErrors) {
       setAlert({
-        type: "error",
-        message: validationMessage,
-      });
-      return;
+        type: 'error',
+        message: 'Corrige los campos marcados para poder enviar la cotizacion.',
+      })
+      return
     }
 
-    setLoading(true);
-    setAlert({ type: "info", message: "" });
+    setWasQuoted(true)
+    setAlert({
+      type: 'success',
+      message: `Cotizacion lista. Total estimado: Q ${results.totalEstimate.toFixed(
+        2
+      )} con tiempo aproximado de ${results.estimatedTime}.`,
+    })
+  }
 
-    try {
-      await submitToGoogleSheets(
-        {
-          ...form,
-          volumetricWeight: results.volumetricWeight.toFixed(2),
-          chargeableWeight: results.chargeableWeight.toFixed(2),
-          baseCost: results.baseCost.toFixed(2),
-          distanceCost: results.distanceCost.toFixed(2),
-          weightCost: results.weightCost.toFixed(2),
-          serviceAdjustment: results.serviceAdjustment.toFixed(2),
-          homePickupCost: results.homePickupCost.toFixed(2),
-          insuranceCost: results.insuranceCost.toFixed(2),
-          totalEstimate: results.totalEstimate.toFixed(2),
-          estimatedTime: results.estimatedTime,
-        },
-        "cotizador"
-      );
+  useEffect(() => {
+    if (!wasQuoted) return
 
+    if (hasErrors) {
       setAlert({
-        type: "success",
-        message: "Cotización enviada con éxito.",
-      });
-
-      setForm(initialForm);
-    } catch (error) {
-      setAlert({
-        type: "error",
-        message:
-          "Error al enviar la cotización. Verifica tu conexión con Google Sheets.",
-      });
-    } finally {
-      setLoading(false);
+        type: 'error',
+        message: 'Hay cambios pendientes con error. Corrige campos para recotizar.',
+      })
+      return
     }
-  };
+
+    setAlert({
+      type: 'success',
+      message: `Cotizacion actualizada. Nuevo total: Q ${results.totalEstimate.toFixed(
+        2
+      )} con tiempo aproximado de ${results.estimatedTime}.`,
+    })
+  }, [
+    wasQuoted,
+    hasErrors,
+    results.totalEstimate,
+    results.estimatedTime,
+    results.volumetricWeight,
+    results.chargeableWeight,
+  ])
+
+  const getInputClass = (field) =>
+    touched[field] && errors[field] ? 'input-invalid' : ''
+
+  const showFieldError = (field) => touched[field] && errors[field]
 
   return (
     <section className="page">
@@ -214,7 +262,7 @@ export function QuotePage() {
         />
 
         <div className="two-cols">
-          <form className="form-card" onSubmit={handleSubmit}>
+          <form className="form-card quote-form" onSubmit={handleSubmit} noValidate>
             <label>
               Nombre completo
               <input
@@ -222,9 +270,13 @@ export function QuotePage() {
                 name="fullName"
                 value={form.fullName}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 placeholder="Tu nombre completo"
-                required
+                className={getInputClass('fullName')}
               />
+              {showFieldError('fullName') && (
+                <span className="field-error">{errors.fullName}</span>
+              )}
             </label>
 
             <label>
@@ -234,76 +286,80 @@ export function QuotePage() {
                 name="email"
                 value={form.email}
                 onChange={handleChange}
+                onBlur={handleBlur}
                 placeholder="tu@email.com"
-                required
+                className={getInputClass('email')}
               />
+              {showFieldError('email') && (
+                <span className="field-error">{errors.email}</span>
+              )}
             </label>
 
-            <label>
-              Origen
-              <select
-                name="originCountry"
-                value={form.originCountry}
-                onChange={handleChange}
-              >
-                <option value="usa">Estados Unidos</option>
-                <option value="mexico">México</option>
-                <option value="espana">España</option>
-              </select>
-            </label>
+            <div className="field-grid field-grid-2">
+              <label>
+                Origen
+                <select
+                  name="originCountry"
+                  value={form.originCountry}
+                  onChange={handleChange}
+                >
+                  <option value="usa">Estados Unidos</option>
+                  <option value="mexico">Mexico</option>
+                  <option value="espana">Espana</option>
+                </select>
+              </label>
 
-            <label>
-              Destino
-              <select
-                name="destinationType"
-                value={form.destinationType}
-                onChange={handleChange}
-              >
-                <option value="misma_ciudad">Misma ciudad</option>
-                <option value="otro_departamento">Otro departamento</option>
-                <option value="internacional">Internacional</option>
-              </select>
-            </label>
+              <label>
+                Destino
+                <select
+                  name="destinationType"
+                  value={form.destinationType}
+                  onChange={handleChange}
+                >
+                  <option value="misma_ciudad">Misma ciudad</option>
+                  <option value="otro_departamento">Otro departamento</option>
+                  <option value="internacional">Internacional</option>
+                </select>
+              </label>
+            </div>
 
-            <label>
-              Peso (kg)
-              <input
-                type="number"
-                min="0.1"
-                max="100"
-                step="0.01"
-                name="weight"
-                value={form.weight}
-                onChange={handleChange}
-                placeholder="Ej. 2.50"
-                required
-              />
-            </label>
+            <div className="field-grid field-grid-2">
+              <label>
+                Peso (kg)
+                <input
+                  type="number"
+                  min="0.1"
+                  max="100"
+                  step="0.01"
+                  name="weight"
+                  value={form.weight}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  placeholder="Ej. 2.50"
+                  className={getInputClass('weight')}
+                />
+                {showFieldError('weight') && (
+                  <span className="field-error">{errors.weight}</span>
+                )}
+              </label>
 
-            <label>
-              Nivel de servicio
-              <select
-                name="serviceLevel"
-                value={form.serviceLevel}
-                onChange={handleChange}
-              >
-                <option value="estandar">Estándar</option>
-                <option value="express">Exprés</option>
-              </select>
-            </label>
+              <label>
+                Nivel de servicio
+                <select
+                  name="serviceLevel"
+                  value={form.serviceLevel}
+                  onChange={handleChange}
+                >
+                  <option value="estandar">Estandar</option>
+                  <option value="express">Expres</option>
+                </select>
+              </label>
+            </div>
 
-            <div>
-              <p style={{ marginBottom: "0.5rem", fontWeight: 600 }}>
-                Dimensiones (opcional)
-              </p>
+            <div className="form-group">
+              <p className="group-title">Dimensiones (opcional)</p>
 
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-                  gap: "0.75rem",
-                }}
-              >
+              <div className="field-grid field-grid-3">
                 <label>
                   Largo (cm)
                   <input
@@ -313,8 +369,13 @@ export function QuotePage() {
                     name="length"
                     value={form.length}
                     onChange={handleChange}
+                    onBlur={handleBlur}
                     placeholder="40"
+                    className={getInputClass('length')}
                   />
+                  {showFieldError('length') && (
+                    <span className="field-error">{errors.length}</span>
+                  )}
                 </label>
 
                 <label>
@@ -326,8 +387,13 @@ export function QuotePage() {
                     name="width"
                     value={form.width}
                     onChange={handleChange}
+                    onBlur={handleBlur}
                     placeholder="30"
+                    className={getInputClass('width')}
                   />
+                  {showFieldError('width') && (
+                    <span className="field-error">{errors.width}</span>
+                  )}
                 </label>
 
                 <label>
@@ -339,48 +405,46 @@ export function QuotePage() {
                     name="height"
                     value={form.height}
                     onChange={handleChange}
+                    onBlur={handleBlur}
                     placeholder="20"
+                    className={getInputClass('height')}
                   />
+                  {showFieldError('height') && (
+                    <span className="field-error">{errors.height}</span>
+                  )}
                 </label>
               </div>
             </div>
 
-            <div>
-              <p style={{ marginBottom: "0.5rem", fontWeight: 600 }}>Extras</p>
+            <div className="form-group">
+              <p className="group-title">Extras</p>
 
-              <label style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+              <label className="checkbox-row">
                 <input
                   type="checkbox"
                   name="homePickup"
                   checked={form.homePickup}
                   onChange={handleChange}
                 />
-                Recolección a domicilio
+                Recoleccion a domicilio
               </label>
 
-              <label style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+              <label className="checkbox-row">
                 <input
                   type="checkbox"
                   name="insurance"
                   checked={form.insurance}
                   onChange={handleChange}
                 />
-                Seguro contra pérdida y accidentes
+                Seguro contra perdida y accidentes
               </label>
             </div>
 
-            <button className="btn btn-primary" disabled={loading || !!validationMessage}>
-              {loading ? "Enviando..." : "Enviar cotización"}
+            <button className="btn btn-primary quote-submit" disabled={hasErrors}>
+              Calcular cotizacion
             </button>
 
-            {loading && (
-              <Spinner label="Registrando cotización en Google Sheets..." />
-            )}
-
-            <Alert
-              type={validationMessage ? "error" : alert.type}
-              message={validationMessage || alert.message}
-            />
+            <Alert type={alert.type} message={alert.message} />
           </form>
 
           <div className="result-card">
@@ -395,7 +459,7 @@ export function QuotePage() {
                 <strong>Peso real ingresado:</strong> {form.weight || "0.00"} kg
               </li>
               <li>
-                <strong>Peso volumétrico:</strong>{" "}
+                <strong>Peso volumetrico:</strong>{' '}
                 {results.volumetricWeight.toFixed(2)} kg
               </li>
               <li>
@@ -424,7 +488,7 @@ export function QuotePage() {
                 <strong>Seguro:</strong> Q {results.insuranceCost.toFixed(2)}
               </li>
               <li>
-                <strong>Tiempo estimado:</strong> {results.estimatedTime}
+                <strong>Tiempo estimado:</strong> {results.estimatedTime || 'Pendiente'}
               </li>
               <li>
                 <strong>Total estimado:</strong> Q{" "}
@@ -435,5 +499,5 @@ export function QuotePage() {
         </div>
       </div>
     </section>
-  );
+  )
 }

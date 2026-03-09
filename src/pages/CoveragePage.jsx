@@ -2,40 +2,46 @@ import { SectionHeader } from '../components/common/SectionHeader'
 
 const coverageData = [
   {
-    region: 'Ciudad de Guatemala',
-    coverage: 'Cobertura completa',
-    time: 'Mismo día o 24 horas',
-    note: 'Disponible para entregas estándar y exprés.',
+    zone: 'Ciudad de Guatemala (zona urbana)',
+    type: 'Misma ciudad',
+    standard: '24 horas',
+    express: '4 a 8 horas',
+    service: 'Cobertura completa',
   },
   {
-    region: 'Mixco, Villa Nueva y San Miguel Petapa',
-    coverage: 'Cobertura extendida',
-    time: '24 horas',
-    note: 'Incluye zonas metropolitanas seleccionadas.',
+    zone: 'Mixco, Villa Nueva, San Miguel Petapa',
+    type: 'Misma ciudad / area metropolitana',
+    standard: '24 horas',
+    express: '8 a 12 horas',
+    service: 'Cobertura extendida',
   },
   {
-    region: 'Antigua Guatemala y Sacatepéquez',
-    coverage: 'Cobertura regional',
-    time: '24 a 48 horas',
-    note: 'Aplican cargos según distancia y nivel de servicio.',
+    zone: 'Sacatepequez (Antigua Guatemala)',
+    type: 'Otro departamento',
+    standard: '2 a 3 dias habiles',
+    express: '1 dia habil',
+    service: 'Cobertura regional',
   },
   {
-    region: 'Quetzaltenango',
-    coverage: 'Cobertura departamental',
-    time: '24 a 48 horas',
-    note: 'Disponible para envíos estándar y exprés.',
+    zone: 'Quetzaltenango',
+    type: 'Otro departamento',
+    standard: '2 a 3 dias habiles',
+    express: '1 a 2 dias habiles',
+    service: 'Cobertura departamental',
   },
   {
-    region: 'Escuintla',
-    coverage: 'Cobertura departamental',
-    time: '24 a 48 horas',
-    note: 'Sujeto a validación de zona exacta.',
+    zone: 'Escuintla',
+    type: 'Otro departamento',
+    standard: '2 a 3 dias habiles',
+    express: '1 dia habil',
+    service: 'Cobertura departamental',
   },
   {
-    region: 'Petén, Izabal y Alta Verapaz',
-    coverage: 'Cobertura nacional parcial',
-    time: '2 a 4 días hábiles',
-    note: 'La entrega depende del acceso y condiciones de ruta.',
+    zone: 'Peten, Izabal, Alta Verapaz',
+    type: 'Cobertura nacional parcial',
+    standard: '3 a 5 dias habiles',
+    express: '2 a 4 dias habiles',
+    service: 'Validacion previa',
   },
 ]
 
@@ -48,55 +54,56 @@ export function CoveragePage() {
           subtitle="Consulta las áreas donde AeroPaq ofrece servicio y los tiempos estimados de entrega según la región."
         />
 
-        <div className="two-cols">
-          <iframe
-          title="Mapa de cobertura en Guatemala"
-          width="100%"
-          height="320"
-          style={{ border: 0, borderRadius: '16px' }}
-          loading="lazy"
-          allowFullScreen
-          src={`https://www.google.com/maps/embed/v1/place?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&q=Guatemala`}
-        ></iframe>
+        <div className="coverage-intro-grid">
+          <article className="card">
+            <h3>Cobertura nacional sin API</h3>
+            <p>
+              Esta seccion usa una matriz de cobertura gratuita con informacion
+              por zona de Guatemala. No requiere Google Maps ni APIs externas.
+            </p>
+            <ul className="list">
+              <li>Capital y area metropolitana con atencion prioritaria</li>
+              <li>Departamentos con entregas estandar y expres</li>
+              <li>Zonas de acceso especial con validacion previa</li>
+            </ul>
+          </article>
 
           <article className="card">
-            <h3>Áreas incluidas</h3>
+            <h3>Como se conecta al cotizador</h3>
             <p>
-              Nuestra cobertura incluye la ciudad capital, áreas metropolitanas
-              y departamentos seleccionados. Los tiempos de entrega pueden
-              variar según la distancia, el tipo de servicio y la accesibilidad
-              de la zona.
+              Los tiempos mostrados estan alineados con tus opciones de destino
+              y nivel de servicio. Puedes ampliar esta tabla sin cambiar la
+              arquitectura.
             </p>
-
             <ul className="list">
-              <li>Ciudad de Guatemala y área metropolitana</li>
-              <li>Cobertura en cabeceras departamentales seleccionadas</li>
-              <li>Entregas estándar y exprés según disponibilidad</li>
-              <li>Validación previa para zonas de difícil acceso</li>
+              <li>Misma ciudad: tiempos mas rapidos</li>
+              <li>Otro departamento: ventana de 1 a 3 dias</li>
+              <li>Cobertura parcial: sujeto a ruta y clima</li>
             </ul>
           </article>
         </div>
 
-        <div className="coverage-table card mt-32">
-          <h3>Matriz de cobertura</h3>
-
-          <div style={{ overflowX: 'auto' }}>
-            <table className="coverage-table-element">
+        <div className="card coverage-table-card">
+          <h3>Matriz de cobertura Guatemala</h3>
+          <div className="coverage-table-wrap">
+            <table className="coverage-table">
               <thead>
                 <tr>
-                  <th>Región</th>
-                  <th>Cobertura</th>
-                  <th>Tiempo estimado</th>
-                  <th>Observaciones</th>
+                  <th>Zona</th>
+                  <th>Tipo</th>
+                  <th>Estandar</th>
+                  <th>Expres</th>
+                  <th>Disponibilidad</th>
                 </tr>
               </thead>
               <tbody>
                 {coverageData.map((item) => (
-                  <tr key={item.region}>
-                    <td>{item.region}</td>
-                    <td>{item.coverage}</td>
-                    <td>{item.time}</td>
-                    <td>{item.note}</td>
+                  <tr key={item.zone}>
+                    <td>{item.zone}</td>
+                    <td>{item.type}</td>
+                    <td>{item.standard}</td>
+                    <td>{item.express}</td>
+                    <td>{item.service}</td>
                   </tr>
                 ))}
               </tbody>

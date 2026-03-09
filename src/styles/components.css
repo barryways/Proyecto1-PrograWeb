@@ -138,9 +138,13 @@
   background: var(--bg-form);
 }
 
+.quote-form {
+  display: grid;
+  gap: 0.9rem;
+}
+
 .form-card label {
   display: block;
-  margin-bottom: 0.85rem;
   font-weight: 600;
   color: var(--text-subtitle);
 }
@@ -167,6 +171,67 @@
 .form-card input::placeholder,
 .form-card textarea::placeholder {
   color: var(--input-placeholder);
+}
+
+.form-card input.input-invalid,
+.form-card select.input-invalid,
+.form-card textarea.input-invalid {
+  border-color: var(--state-error);
+  background: #fff7f7;
+}
+
+.field-error {
+  display: block;
+  margin-top: 0.3rem;
+  color: var(--state-error);
+  font-size: 0.83rem;
+  font-weight: 500;
+}
+
+.field-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.field-grid-2 {
+  grid-template-columns: 1fr;
+}
+
+.field-grid-3 {
+  grid-template-columns: 1fr;
+}
+
+.form-group {
+  border: 1px solid var(--separator);
+  border-radius: 0.75rem;
+  background: #fafcff;
+  padding: 0.8rem;
+}
+
+.group-title {
+  margin-bottom: 0.6rem;
+  font-weight: 700;
+  color: var(--text-subtitle);
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.checkbox-row + .checkbox-row {
+  margin-top: 0.6rem;
+}
+
+.checkbox-row input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+}
+
+.quote-submit {
+  width: 100%;
 }
 
 .form-card button[disabled] {
@@ -293,6 +358,16 @@
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 999px;
   padding: 0.24rem 0.58rem;
+}
+
+@media (min-width: 700px) {
+  .field-grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .field-grid-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 @media (min-width: 900px) {

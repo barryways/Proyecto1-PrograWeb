@@ -25,16 +25,17 @@ export function ContactPage() {
     setAlert({ type: 'info', message: '' })
 
     try {
-      await submitToGoogleSheets(form, 'contacto')
+      await submitToGoogleSheets(form, 'Contactos')
       setAlert({
         type: 'success',
         message: 'Mensaje enviado. Pronto te contactaremos.',
       })
       setForm(initialContact)
-    } catch {
+    } catch (error) {
       setAlert({
         type: 'error',
-        message: 'No se pudo enviar. Intenta de nuevo en unos minutos.',
+        message:
+          error?.message || 'No se pudo enviar. Intenta de nuevo en unos minutos.',
       })
     } finally {
       setLoading(false)
