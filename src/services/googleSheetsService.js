@@ -17,6 +17,7 @@ export async function submitToGoogleSheets(payload, source = 'Contactos') {
   const endpoint = import.meta.env.DEV
     ? '/api/google-sheets'
     : import.meta.env.VITE_GOOGLE_SHEETS_WEBHOOK_URL
+
   const data = normalizePayload(payload, source)
 
   if (!data.fullName || !data.phone || !data.message) {
@@ -37,17 +38,24 @@ export async function submitToGoogleSheets(payload, source = 'Contactos') {
   let response
 
   try {
+    const body = new URLSearchParams({
+      source: data.source,
+      fullName: data.fullName,
+      phone: data.phone,
+      message: data.message,
+    })
+
     response = await fetch(endpoint, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
       },
-      body: JSON.stringify(data),
+      body: body.toString(),
     })
   } catch (error) {
     console.log(error)
     throw new Error(
-      'No se pudo conectar con Google Sheets. Revisa CORS o la URL del webhook.'
+      'No se pudo conectar con Google Sheets. Revisa la URL del Web App o CORS.'
     )
   }
 
@@ -56,7 +64,7 @@ export async function submitToGoogleSheets(payload, source = 'Contactos') {
   try {
     result = await response.json()
   } catch (error) {
-    console.log(error);
+    console.log(error)
     throw new Error('La respuesta del servicio no es un JSON válido.')
   }
 
