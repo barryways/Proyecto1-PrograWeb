@@ -1,18 +1,87 @@
-# React + Vite
+# Proyecto1-PrograWeb
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Proyecto de frontend en React con Vite, creado como base para una web de cotizaciones de envíos/servicios.
 
-Currently, two official plugins are available:
+## 1. Tecnologías y versiones
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- React: 18.x (vía `react` y `react-dom`)
+- Vite: 5.x
+- JavaScript moderno (ES6+)
+- CSS modular con archivos en `src/styles/`
+- ESLint: configuración extendida del template React + Vite
+- Navegación cliente: React Router 
 
-## React Compiler
+Para ver versiones exactas, revisar `package.json`:
+- `react`
+- `react-dom`
+- `vite`
+- `@vitejs/plugin-react`
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+## 2. Cómo ejecutar el proyecto
 
-Note: This will impact Vite dev & build performances.
+### Requisitos previos
 
-## Expanding the ESLint configuration
+- Node.js 18+ (recomendado)
+- npm 10+ (o yarn/pnpm compatibles)
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Instalación
+
+```bash
+cd c:/Usuario/GitHub/Proyecto1-PrograWeb
+npm install
+```
+
+### Modo desarrollo
+
+```bash
+npm run dev
+```
+
+Abrir `http://localhost:5173` (o la URL que muestre Vite).
+
+### Compilar para producción
+
+```bash
+npm run build
+```
+
+### Previsualizar build de producción
+
+```bash
+npm run preview
+```
+
+## 3. Decisiones técnicas relevantes
+
+### Estructura general
+
+- `src/main.jsx`: punto de entrada que monta `<App />` y carga estilos globales.
+- `src/App.jsx`: componente raíz que define layout general y router.
+- `src/app/routes.js`: rutas de la app (Home, Servicios, Cotización, FAQ, etc.).
+- `src/app/useHashRoute.js`: hook personalizado para enrutamiento hash. Mantiene compatibilidad simple sin dependencias externas pesadas o configuración compleja.
+
+### Componentes
+
+- Componentes de layout globales (Navbar, Footer).
+- Componentes reutilizables (Alert, PlaceholderImage, SectionHeader, Spinner).
+- Páginas de alto nivel.
+
+### Servicio de datos
+
+- `src/services/googleSheetsService.js`: integración / lógica de comunicación para envío de datos (formulario a Google Sheets o API compatible).
+
+### Estilos
+
+- `src/styles/` contiene:
+  - `tokens.css`: variables de diseño (colores, tipografía, espacios)
+  - `base.css`: resets y base global
+  - `components.css`: reglas específicas para componentes
+  - `layout.css`, `pages.css`: organización por responsabilidad
+
+### Enrutamiento
+
+- Rutas definidas en `app/routes.js` y renderizadas con lógica en `App.jsx`.
+- `useHashRoute.js` permite navegación en hash (ej: `#/services`) con un enfoque simple y sin server-side routes.
+
+
+
